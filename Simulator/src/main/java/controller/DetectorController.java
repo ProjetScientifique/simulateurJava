@@ -1,16 +1,14 @@
 package controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import model.Coord;
 import model.Detector;
+import model.Emergency;
 
 public abstract class DetectorController {
-	protected ArrayList<Detector> detectorArray = new ArrayList<>();
-
+	protected ArrayList<Detector> detectorArray = new ArrayList<>();	
 	
 	public void updateDetectors(Coord coordEmergency, double intensity) {
 		for(Detector detector : detectorArray) {
@@ -20,24 +18,22 @@ public abstract class DetectorController {
 		}
 	}
 	
+	public abstract void populateDetectorArray() throws IOException;
+	
+	public abstract String apiPostTriggeredDetector(Emergency emergency, Detector detector) throws IOException;
+	
 	public ArrayList<Detector> getDetectorArray(){
 		return detectorArray;
 	}
 	
-	public JSONObject getTriggeredDetectorArray(){
-		JSONArray jsonArr = new JSONArray();
-		JSONObject jsonString = new JSONObject()
-				.put("Detectors", jsonArr);
+	public ArrayList<Detector> getTriggeredDetectorArray(){
+		ArrayList<Detector> arrTriggeredDetectors = new ArrayList<Detector>();
 		for(Detector detector : detectorArray) {
 			if (detector.getIntensity() != 0) {
-				jsonArr.put(new JSONObject()
-						.put("longitude", detector.getCoord().getLongitude())
-						.put("latitude", detector.getCoord().getLatitude())
-						.put("intensity", detector.getIntensity())
-				);
+				arrTriggeredDetectors.add(detector);
 			}
 		}
-		return jsonString;
+		return arrTriggeredDetectors;
 	}
 	
 	public void resetDetectors() {
@@ -48,6 +44,7 @@ public abstract class DetectorController {
 	
 	@Override
 	public String toString() {
-		return "DetectorController [getDetectorArray()=" + getDetectorArray() + "]";
+		return "DetectorController [getDetectorArray()=" + getDetectorArray() + ", getTriggeredDetectorArray()="
+				+ getTriggeredDetectorArray() + "]";
 	}
 }

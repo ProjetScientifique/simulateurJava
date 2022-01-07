@@ -1,56 +1,66 @@
 package launcher;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.JSONObject;
 
+import controller.ControllerConfig;
 import controller.DetectorController;
 import controller.EmergencyController;
 import controller.FireController;
 import controller.SensorController;
+import database.SetupDb;
+import model.Detector;
 import model.Emergency;
+import mqtt.BrokerMqtt;
+import rest.SimulatorApi;
 
 public class Launcher {
-	public static void main(String[] args) {
-		try {    
-			// Setup MQTT
-			MqttClient sampleClient = new MqttClient("tcp://127.0.0.1:1883", "", new MemoryPersistence());
-			MqttConnectOptions connOpts = new MqttConnectOptions();
-	        connOpts.setCleanSession(true);
-	        sampleClient.connect(connOpts);
-			// Instanciate controllers
-			DetectorController sensorController = new SensorController();
-			EmergencyController fireController = new FireController();
-			int turn = 0;
-			do {
-				Emergency fire = fireController.generateEmergency();
-				sensorController.updateDetectors(fire.getCoord(), fire.getIntensity());
-				JSONObject trigDetectors = sensorController.getTriggeredDetectorArray();
-				String msg = "";
-				for(Object o: trigDetectors.getJSONArray("Detectors")){
-				    if ( trigDetectors instanceof JSONObject ) {
-				    	msg += o + "\n";
-				    }
-				}
-				System.out.println(msg);
-				MqttMessage message = new MqttMessage(msg.getBytes());
-	            message.setQos(2);
-	            sampleClient.publish("topic/detectors", message);
-	            turn += 1;
-	            sensorController.resetDetectors();
-	            TimeUnit.SECONDS.sleep(5);
-			}while(turn <= 0);
-            System.exit(0);
-            System.out.println("?");
-		} catch (MqttException e) {
-            e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	public static void main(String[] args) throws IOException, InterruptedException, MqttException {
+		//// API & MQTT Clients
+		SimulatorApi simulatorApiClient = new SimulatorApi("449928d774153132c2c3509647e3d23f8e168fb50660fa27dd33c8342735b166");
+		BrokerMqtt mqttClient = new BrokerMqtt();
+		//// Setup DB
+		SetupDb setupDb = new SetupDb(simulatorApiClient);
+		setupDb.resetDatabase();
+		setupDb.postDetectors();
+		//// Setup Detectors
+		// Get Detectors from DB
+		DetectorController sensorController = new SensorController(simulatorApiClient);
+		sensorController.populateDetectorArray();
+		//// Start Simulation
+		// Create fire 
+		EmergencyController fireController = new FireController(simulatorApiClient);
+		int turn = 0;
+		do {
+			// Generate fire
+			Emergency fire = fireController.generateEmergency();
+			// Post to the API (maybe go through the broker ?)
+			fireController.apiPostEmergency(fire);
+			System.out.println("Fire generated : " + fire);
+			// Update detectors to know which one detected the incident
+			sensorController.updateDetectors(fire.getCoord(), fire.getIntensity());
+			// Get triggered detectors
+			ArrayList<Detector> arrTriggeredDetectors = sensorController.getTriggeredDetectorArray();
+			System.out.println("Triggered detectors : " + arrTriggeredDetectors);
+			// Forge the message that will be sent to the broker and post triggered detectors the the API one by one
+			String msg = "";
+			for(Detector trigDetector: arrTriggeredDetectors){
+				sensorController.apiPostTriggeredDetector(fire, trigDetector);
+			    msg += new JSONObject()
+			    		.put("id", trigDetector.getId())
+			    		.put("intensity", trigDetector.getIntensity())
+			    		+ "\n";
+			}
+			// Send message to broker
+			String responserino = mqttClient.publishMessage("topic/detectors", msg);
+			System.out.println(responserino);
+			turn += 1;
+			TimeUnit.SECONDS.sleep(5);
+		}while(turn < ControllerConfig.NUMB_TURN);
+		System.exit(0);
 	}
 }
