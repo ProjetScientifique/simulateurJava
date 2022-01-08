@@ -14,7 +14,8 @@ public class EmergencyApi {
 	public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 	public static final int idTypeEmergency = 1; // Fire
 	public static final int idTypeStatusEmergency = 1; // Not treated year
-	public static final int idTypeEmergencyFake = 100; // Potential Fires
+	public static final int idTypeEmergencyPotential = 100; // Potential Fires
+	public static final int idEmergencyFake = 1; // Id of Emergency used to regroup all detectors sent
 	private String token;
 	private OkHttpClient client;
 	

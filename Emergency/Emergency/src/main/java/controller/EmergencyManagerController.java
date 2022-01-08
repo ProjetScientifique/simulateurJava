@@ -77,7 +77,7 @@ public class EmergencyManagerController {
 		            // Move detectors from the fake emergency to the real on and purge the collection
 		            for(Detector detector: arrLinkedDetector) {
 		            	emergencyApiClient.deleteApi("detecte", new JSONObject()
-		            			.put("id_incident", EmergencyApi.idTypeEmergencyFake)
+		            			.put("id_incident", EmergencyApi.idEmergencyFake)
 		            			.put("id_detecteur", detector.getId())
 		            			.toString());
 		            	emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
