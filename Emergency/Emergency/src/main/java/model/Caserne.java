@@ -3,11 +3,13 @@ package model;
 public class Caserne extends EmergencyBuilding {
 	private String name;
 	private Coord coord;
+	private int id;
 	
-	public Caserne(String name, Coord coord) {
+	public Caserne(String name, Coord coord, int id) {
 		super();
 		this.name = name;
 		this.coord = coord;
+		this.id = id;
 	}
 
 	@Override
@@ -18,5 +20,10 @@ public class Caserne extends EmergencyBuilding {
 	@Override
 	public Coord getCoord() {
 		return coord;
+	}
+
+	@Override
+	public int getId() {
+		return id;
 	}
 }

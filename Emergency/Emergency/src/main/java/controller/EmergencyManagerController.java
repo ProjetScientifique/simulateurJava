@@ -13,6 +13,7 @@ import com.lemmingapex.trilateration.TrilaterationFunction;
 
 import model.Coord;
 import model.Detector;
+import model.Emergency;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
 
@@ -65,6 +66,7 @@ public class EmergencyManagerController {
 		            
 		            Coord fireCoordinates = new Coord(centroid[1], centroid[0]);
 		            System.out.println("Potential fire : " + fireCoordinates);
+		            System.out.println(getIntensityFire(arrLinkedDetector, fireCoordinates));
 		            // Post located fire to database
 		            String fire = emergencyApiClient.postApi("incident", new JSONObject()
 		            		.put("id_type_incident", EmergencyApi.idTypeEmergency)
@@ -120,5 +122,18 @@ public class EmergencyManagerController {
         return positions;
     }
 	
+    private double getIntensityFire(ArrayList<Detector> arrLinkedDetectors, Coord coordEmergency) {
+    	double intensityFire = 0;
+    	double maxIntensityFromDetector = 0;
+    	for (Detector detector: arrLinkedDetectors) {
+    		if (detector.getIntensity() >= maxIntensityFromDetector) {
+    			double distToCenter = Math.sqrt(Math.pow(coordEmergency.getLongitude() - detector.getCoord().getLongitude(), 2) + Math.pow(coordEmergency.getLatitude() - detector.getCoord().getLatitude(), 2));
+        		double intensityFromDetector = detector.getIntensity()*detector.getRange()/(detector.getRange()-distToCenter);
+    			maxIntensityFromDetector = detector.getIntensity();
+        		intensityFire = intensityFromDetector;
+    		}
+    	}
+    	return intensityFire;
+    }
 	
 }
