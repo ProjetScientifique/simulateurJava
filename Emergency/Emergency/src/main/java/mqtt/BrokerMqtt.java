@@ -1,8 +1,6 @@
 package mqtt;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -12,19 +10,24 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
+import controller.ControllerConfig;
+import model.Coord;
 import model.Detector;
+import model.Sensor;
 import rest.EmergencyApi;
 
 public class BrokerMqtt {
 	private MqttClient mqttClient;
-	private ArrayList<Detector> arrTriggeredDetectors;
+	private ArrayList<Detector> arrTriggeredDetectors = new ArrayList<Detector>();
 
 	public BrokerMqtt() throws MqttException {
 		super();
 		this.mqttClient = new MqttClient("tcp://127.0.0.1:1883", "", new MemoryPersistence());;
+	}
+	
+	public void setUpBroker() throws MqttSecurityException, MqttException {
 		MqttConnectOptions connOpts = new MqttConnectOptions();
         connOpts.setCleanSession(true);
         mqttClient.connect(connOpts);
@@ -41,34 +44,37 @@ public class BrokerMqtt {
 	    }
 	}
 	
+	// This function will subscribe to a given topic and set a callback that will allow us to get messages sent by the mqtt broker
 	public void getMessage(String topic, final EmergencyApi emergencyApiClient) throws MqttSecurityException, MqttException, InterruptedException {
-		
-        final CountDownLatch latch = new CountDownLatch(1);
+        //final CountDownLatch latch = new CountDownLatch(1);
         mqttClient.setCallback(new MqttCallback() {
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                String time = new Timestamp(System.currentTimeMillis()).toString();
-                System.out.println("\nReceived a Message!" +
-                    "\n\tTime:    " + time +
-                    "\n\tTopic:   " + topic +
-                    "\n\tMessage: " + new String(message.getPayload()) +
-                    "\n\tQoS:     " + message.getQos() + "\n");
-                int id = new JSONObject(new String(message.getPayload())).getInt("id");
-                JSONArray res = emergencyApiClient.getApi("detecteur/" + id);
-                System.out.println(res);
-                //arrTriggeredDetectors.add(detector); // ?
-                latch.countDown(); // unblock main thread
+                System.out.println("Received a Message!" + new String(message.getPayload()));
+                JSONObject json = new JSONObject(new String(message.getPayload()));
+                JSONObject jsonDetector = emergencyApiClient.getApi("detecteur/" + json.getInt("id")).getJSONObject(0);
+                emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
+                		.put("id_incident", EmergencyApi.idTypeEmergencyFake)
+                		.put("id_detecteur", json.getInt("id"))
+                		.put("date_detecte", java.time.LocalDateTime.now())
+                		.put("intensite_detecte", json.getDouble("intensity"))
+                		.toString());
+                Detector detector = new Sensor(json.getDouble("intensity"), "", new Coord(jsonDetector.getDouble("longitude_detecteur"), jsonDetector.getDouble("latitude_detecteur")), ControllerConfig.RANGE, jsonDetector.getInt("id_detecteur"));
+                synchronized (arrTriggeredDetectors) {
+                    arrTriggeredDetectors.add(detector);
+				}
+                //latch.countDown(); // unblock main thread
             }
 
             public void connectionLost(Throwable cause) {
                 System.out.println("Connection to broker lost!" + cause.getMessage());
-                latch.countDown(); // unblock main thread
+                //latch.countDown(); // unblock main thread
             }
 
             public void deliveryComplete(IMqttDeliveryToken token) {
             }
         });
         mqttClient.subscribe(topic, 0);	
-		latch.await();
+		//latch.await();
 	}
 	
 	public void disconnect() throws MqttException {

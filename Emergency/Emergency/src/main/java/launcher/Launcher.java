@@ -1,6 +1,7 @@
 package launcher;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -8,24 +9,25 @@ import controller.EmergencyManagerController;
 import database.SetupDb;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
-import rest.SimulatorApi;
 
 public class Launcher {
 	public static void main(String[] args) throws MqttException, IOException, InterruptedException {
 		//// API & MQTT Clients
-		SimulatorApi simulatorApiClient = new SimulatorApi("449928d774153132c2c3509647e3d23f8e168fb50660fa27dd33c8342735b166");
 		EmergencyApi emergencyApiClient = new EmergencyApi("CB814D37E278A63D3666B1A1604AD0F5C5FD7E177267F62B8D719F49182F410A");
 		BrokerMqtt mqttClient = new BrokerMqtt();
+		mqttClient.setUpBroker();
 		//// Setup DB
-		//SetupDb setupDb = new SetupDb(emergencyApiClient);
-		//setupDb.resetDatabase();
-		//setupDb.postDetectors();
+		SetupDb setupDb = new SetupDb(emergencyApiClient);
+		setupDb.resetDatabase();
+		setupDb.postDetectors();
+		setupDb.postFakeEmergency(); // Emergency that will regroup every detector sent by the IoT chain, until an actual emergency is located. When located, concerned detectors will be moved from this fake emrgency to the real one
 		//// Start localization of fire
+		EmergencyManagerController fireManagerController = new EmergencyManagerController(mqttClient);
 		System.out.println("Starting !");
-		//EmergencyManagerController fireManagerController = new EmergencyManagerController(mqttClient.getArrTriggeredDetectors());
+		mqttClient.getMessage("python/test", emergencyApiClient);
 		while (true) {
-			mqttClient.getMessage("python/test", emergencyApiClient);	
-			System.out.println("hello");
+			fireManagerController.detectPotentialFire(emergencyApiClient);
+			TimeUnit.SECONDS.sleep(1);
 		}
 	}
 }

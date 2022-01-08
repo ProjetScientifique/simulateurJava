@@ -12,6 +12,9 @@ import okhttp3.Response;
 
 public class EmergencyApi {	
 	public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+	public static final int idTypeEmergency = 1; // Fire
+	public static final int idTypeStatusEmergency = 1; // Not treated year
+	public static final int idTypeEmergencyFake = 100; // Potential Fires
 	private String token;
 	private OkHttpClient client;
 	
@@ -51,10 +54,11 @@ public class EmergencyApi {
 		  }
 	}
 	
-	public String deleteApi(String url) throws IOException {
+	public String deleteApi(String url, String json) throws IOException {
+		RequestBody body = RequestBody.create(json, JSON);
 		Request request = new Request.Builder()
 				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
-				.delete()
+				.delete(body)
 				.build();
 		  
 		  try (Response response = client.newCall(request).execute()) {

@@ -20,7 +20,6 @@ public class SetupDb {
 		int i = 1;
 		for (Coord coordForDetector : ControllerConfig.COORDS) {
 			String res = client.postApi("detecteur", "{\r\n"
-					+ "	  \"id_detecteur\": " + i + ",\r\n"
 					+ "	  \"id_type_detecteur\": " + 1 + ",\r\n"
 					+ "	  \"latitude_detecteur\": " + coordForDetector.getLatitude() + ",\r\n"
 					+ "	  \"longitude_detecteur\": "+ coordForDetector.getLongitude() + ",\r\n"
