@@ -37,6 +37,7 @@ public class FireController extends EmergencyController {
 			+ "	  \"intensite_incident\": " + emergency.getIntensity() + ",\r\n"
 			+ "	  \"date_incident\": \"" + java.time.LocalDateTime.now() + "\"\r\n"
 			+ "}");
+		System.out.println(res);
 		emergency.setId(new JSONObject(res).getInt("id_incident"));
 		return res;
 	}
