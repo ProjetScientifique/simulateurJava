@@ -134,10 +134,12 @@ public class EmergencyManagerController {
 	}
 	
 	// Check if the linkedDetectors array has enough data to get the position of a potential fire. If it does, detect the fire, post it to the DB, then update the DB to have the detectors linked to the incident we just found instead of a phantom one.
-	public void detectPotentialFire() throws JSONException, IOException {
+	public void detectPotentialFire() throws JSONException, IOException, ParseException {
+		getEmergencies();
 		if (getLinkedDetectors().size() != 0) {
 			for(ArrayList<Detector> arrLinkedDetector: getLinkedDetectors()) {
 				if (arrLinkedDetector.size() >= 3) {
+					boolean isNewFire = true;
 					// DETECT FIRE
 					double[][] positions = getDetectorsPosition(arrLinkedDetector);
 		            double[] distances = getDetectorsDistance(arrLinkedDetector);
@@ -149,28 +151,55 @@ public class EmergencyManagerController {
 		            
 		            Coord fireCoordinates = new Coord(centroid[1], centroid[0]);
 		            System.out.println("Potential fire : " + fireCoordinates + "Intensity : " + getIntensityFire(arrLinkedDetector, fireCoordinates));
-		            // Post located fire to database
-		            String fire = emergencyApiClient.postApi("incident", new JSONObject()
-		            		.put("id_type_incident", EmergencyApi.idTypeEmergency)
-		            		.put("latitude_incident", centroid[0])
-		            		.put("longitude_incident", centroid[1])
-		            		.put("intensite_incident", getIntensityFire(arrLinkedDetector, fireCoordinates))
-		            		.put("date_incident", java.time.LocalDateTime.now())
-		            		.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyNotTreated)
-		            		.toString());
-		            // Move detectors from the fake emergency to the real on and purge the collection
-		            for(Detector detector: arrLinkedDetector) {
-		            	emergencyApiClient.deleteApi("detecte", new JSONObject()
-		            			.put("id_incident", EmergencyApi.idEmergencyFake)
-		            			.put("id_detecteur", detector.getId())
-		            			.toString());
-		            	emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
-		                		.put("id_incident", new JSONObject(fire).getInt("id_incident"))
-		                		.put("id_detecteur", detector.getId())
-		                		.put("date_detecte", java.time.LocalDateTime.now())
-		                		.put("intensite_detecte", detector.getIntensity())
-		                		.toString());
-		            	clientMqtt.getArrTriggeredDetectors().remove(detector);
+		            for(Emergency emergency: arrEmergency) {
+						double distBetweenFires = Math.sqrt(Math.pow(emergency.getCoord().getLongitude() - fireCoordinates.getLongitude(), 2) + Math.pow(emergency.getCoord().getLatitude() - fireCoordinates.getLatitude(), 2));
+						if (distBetweenFires <= 2*ControllerConfig.RANGE) {
+							System.out.println("Fire at coordinates : " + fireCoordinates + " is already known. Updating it." );
+							isNewFire = false;
+							// Update values from existing detectors
+			            	for(Detector detector: arrLinkedDetector) {
+			            		emergencyApiClient.deleteApi("detecte", new JSONObject()
+				            			.put("id_incident", EmergencyApi.idEmergencyFake)
+				            			.put("id_detecteur", detector.getId())
+				            			.toString());
+			            		// Patch equivalent
+			            		String resDelete = emergencyApiClient.deleteApi("detecte", new JSONObject()
+			            				.put("id_incident", emergency.getId())
+				            			.put("id_detecteur", detector.getId())
+				            			.toString());
+			            		emergencyApiClient.postApi("detecte", new JSONObject()
+			            				.put("id_incident", emergency.getId())
+				            			.put("id_detecteur", detector.getId())
+				            			.put("date_detecte", new JSONObject(resDelete).getString("date_detecte"))
+				            			.put("intensite_detecte", detector.getIntensity())
+				            			.toString());
+			            	}
+						}
+		            }
+		            if (isNewFire == true) {
+		            	// Post located fire to database
+			            String fire = emergencyApiClient.postApi("incident", new JSONObject()
+			            		.put("id_type_incident", EmergencyApi.idTypeEmergency)
+			            		.put("latitude_incident", centroid[0])
+			            		.put("longitude_incident", centroid[1])
+			            		.put("intensite_incident", getIntensityFire(arrLinkedDetector, fireCoordinates))
+			            		.put("date_incident", java.time.LocalDateTime.now())
+			            		.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyNotTreated)
+			            		.toString());
+			            // Move detectors from the fake emergency to the real on and purge the collection
+			            for(Detector detector: arrLinkedDetector) {
+			            	emergencyApiClient.deleteApi("detecte", new JSONObject()
+			            			.put("id_incident", EmergencyApi.idEmergencyFake)
+			            			.put("id_detecteur", detector.getId())
+			            			.toString());
+			            	emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
+			                		.put("id_incident", new JSONObject(fire).getInt("id_incident"))
+			                		.put("id_detecteur", detector.getId())
+			                		.put("date_detecte", java.time.LocalDateTime.now())
+			                		.put("intensite_detecte", detector.getIntensity())
+			                		.toString());
+			            	clientMqtt.getArrTriggeredDetectors().remove(detector);
+			            }
 		            }
 				} else {
 					System.out.println("Not enough data to triangulate position !");

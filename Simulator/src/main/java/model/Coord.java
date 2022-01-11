@@ -18,6 +18,17 @@ public class Coord {
 		return latitude;
 	}
 
+	public String toApi() {
+        return this.latitude + ", " + this.longitude;
+    }
+	
+	public boolean equal(Coord coord) {
+		if ((coord.getLongitude() == longitude) && (coord.getLatitude() == latitude)) {
+			return true;
+		}
+		return false;
+	}
+
 	@Override
 	public String toString() {
 		return "Coord [longitude=" + longitude + ", latitude=" + latitude + "]";

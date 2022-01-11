@@ -37,6 +37,8 @@ public class Launcher {
 		while (true) {
 			fireManagerController.detectPotentialFire();
 			fireManagerController.dealWithEmergencies();
+			// Maybe method to send stuff to grafana ?
+			// Maybe sync grafana directly to postgresql ?
 			TimeUnit.SECONDS.sleep(5);
 		}
 	}

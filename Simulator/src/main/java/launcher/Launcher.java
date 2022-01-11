@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.JSONObject;
 
@@ -20,6 +21,7 @@ import model.Emergency;
 import model.Fire;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
+import rest.Map;
 import rest.SimulatorApi;
 
 public class Launcher {
@@ -27,6 +29,7 @@ public class Launcher {
 		//// API & MQTT Clients
 		SimulatorApi simulatorApiClient = new SimulatorApi("449928d774153132c2c3509647e3d23f8e168fb50660fa27dd33c8342735b166");
 		EmergencyApi emergencyApiClient = new EmergencyApi("CB814D37E278A63D3666B1A1604AD0F5C5FD7E177267F62B8D719F49182F410A");
+		Map mapClient = new Map("VybYldGG1GIV15GOG3meIG9QEil7MxfD");
 		BrokerMqtt mqttClient = new BrokerMqtt();
 		//// Setup DB
 		SetupDb setupDb = new SetupDb(simulatorApiClient);
@@ -37,9 +40,10 @@ public class Launcher {
 		DetectorController sensorController = new SensorController(simulatorApiClient);
 		sensorController.populateDetectorArray();
 		//// Start Simulation
-		// Create fire
+		// Create fire & Instantiate Simulation Controller for the Emergency stuff
 		EmergencyController fireController = new FireController(simulatorApiClient);
 		ArrayList<Emergency> arrFire = new ArrayList<Emergency>();
+		EmergencySimulationController emergencySimulationController = new EmergencySimulationController(emergencyApiClient, arrFire, mapClient);
 		int turn = 0;
 		do {
 			/*
@@ -87,7 +91,6 @@ public class Launcher {
 				System.out.println(responserino);
 			}
 			// Do stuff with emergency data ?
-			EmergencySimulationController emergencySimulationController = new EmergencySimulationController(emergencyApiClient, arrFire);
 			emergencySimulationController.simulateIntervention();
 			turn += 1;
 			TimeUnit.SECONDS.sleep(5);
