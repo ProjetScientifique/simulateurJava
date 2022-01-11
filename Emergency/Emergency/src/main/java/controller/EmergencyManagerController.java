@@ -1,28 +1,110 @@
 package controller;
 
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
+import model.CaserneFactory;
 import model.Coord;
 import model.Detector;
 import model.Emergency;
+import model.EmergencyBuilding;
+import model.EmergencyBuildingFactory;
+import model.EmergencyPeople;
+import model.EmergencyPeopleFactory;
+import model.Fire;
+import model.PompierFactory;
+import model.TruckFactory;
+import model.Vehicule;
+import model.VehiculeFactory;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
 
 public class EmergencyManagerController {
 	private BrokerMqtt clientMqtt;
+	private EmergencyApi emergencyApiClient;
+	private ArrayList<EmergencyBuilding> arrEmergencyBuilding = new ArrayList<EmergencyBuilding>();
+	private ArrayList<EmergencyPeople> arrEmergencyPeople = new ArrayList<EmergencyPeople>();
+	private ArrayList<Vehicule> arrVehicule = new ArrayList<Vehicule>();
+	private ArrayList<Emergency> arrEmergency = new ArrayList<Emergency>();
 
-	public EmergencyManagerController(BrokerMqtt clientMqtt) {
+	public EmergencyManagerController(BrokerMqtt clientMqtt, EmergencyApi emergencyApiClient) {
 		super();
 		this.clientMqtt = clientMqtt;
+		this.emergencyApiClient = emergencyApiClient;
+	}
+	
+	public void dealWithEmergencies() throws IOException, JSONException, ParseException {
+		getEmergencies();
+		getRessources(); // Get/Updates ressources
+		for (Emergency emergency: arrEmergency) {
+			if (emergency.getIdTypeStatus() == EmergencyApi.idTypeStatusEmergencyNotTreated) {
+				EmergencyBuilding emergencyBuilding = getClosestEmergencyBuilding(emergency);
+				if (emergencyBuilding != null) {
+					if (emergency.getIntensity() >= 5) {
+						// Send 5 Emergency People
+						postIntervientAndUpdateResources(emergencyApiClient, emergencyBuilding, emergency, 5);
+					} else {
+						// Send 3 Emergency People
+						postIntervientAndUpdateResources(emergencyApiClient, emergencyBuilding, emergency, 3);
+					}
+				}
+			} else {
+				// Maybe method that fetches the intervenes table and recaps the order ?
+				System.out.println("Emergency : " + emergency + " is already being taken care of.");
+			}
+		}
+	}
+	
+	// Same here ? I think I should have three arrays declared as private on this Class, and the getRessources would just populate / update them, much easier ?
+	private void getRessources() throws JSONException, IOException, ParseException {
+		arrEmergencyBuilding = getEmergencyBuildings();
+		arrEmergencyPeople = getEmergencyPeople();
+		arrVehicule = getVehicules();
+	}
+	
+	// MAY RETURN NULL IF NO RESSOURCES ARE AVAILABLE IN ANY EMERGENCY BUILDINGS !
+	private EmergencyBuilding getClosestEmergencyBuilding(Emergency emergency) {
+		JSONArray jsonArr = new JSONArray();
+		for(EmergencyBuilding emergencyBuilding: arrEmergencyBuilding) {
+			if(emergencyBuilding.getAvailableVehicules().size() == 0) {
+				System.out.println("No vehicules available for the Emergency Building : " + emergencyBuilding);
+			} else {
+				if (emergencyBuilding.getAvailableEmergencyPeople().size() == 0) {
+					System.out.println("No emergency people available for the Emergency Building : " + emergencyBuilding);
+				} else {
+					double distBetween = Math.sqrt(Math.pow(emergencyBuilding.getCoord().getLongitude() - emergency.getCoord().getLongitude(), 2) + Math.pow(emergencyBuilding.getCoord().getLatitude() - emergency.getCoord().getLatitude(), 2));
+					jsonArr.put(new JSONObject()
+							.put("index", arrEmergencyBuilding.indexOf(emergencyBuilding))
+							.put("dist_between", distBetween));
+				}
+			}
+		}
+		if (jsonArr.length() != 0) {	
+			EmergencyBuilding closestEmergencyBuilding = arrEmergencyBuilding.get(jsonArr.getJSONObject(0).getInt("index"));
+			double closestDistBetween = jsonArr.getJSONObject(0).getDouble("dist_between");
+			for(Object o: jsonArr) {
+				JSONObject json = new JSONObject(o.toString());
+				if (json.getDouble("dist_between") < closestDistBetween) {
+					closestDistBetween = json.getDouble("dist_between");
+					closestEmergencyBuilding = arrEmergencyBuilding.get(json.getInt("index"));
+				}
+			}
+			return closestEmergencyBuilding;
+		}
+		return null;
 	}
 	
 	// Get Detectors that detected the same fire (Requires that only one fire can be set per turn ?)
@@ -51,7 +133,7 @@ public class EmergencyManagerController {
 	}
 	
 	// Check if the linkedDetectors array has enough data to get the position of a potential fire. If it does, detect the fire, post it to the DB, then update the DB to have the detectors linked to the incident we just found instead of a phantom one.
-	public void detectPotentialFire(EmergencyApi emergencyApiClient) throws JSONException, IOException {
+	public void detectPotentialFire() throws JSONException, IOException {
 		if (getLinkedDetectors().size() != 0) {
 			for(ArrayList<Detector> arrLinkedDetector: getLinkedDetectors()) {
 				if (arrLinkedDetector.size() >= 3) {
@@ -65,16 +147,15 @@ public class EmergencyManagerController {
 		            double[] centroid = optimum.getPoint().toArray();
 		            
 		            Coord fireCoordinates = new Coord(centroid[1], centroid[0]);
-		            System.out.println("Potential fire : " + fireCoordinates);
-		            System.out.println(getIntensityFire(arrLinkedDetector, fireCoordinates));
+		            System.out.println("Potential fire : " + fireCoordinates + "Intensity : " + getIntensityFire(arrLinkedDetector, fireCoordinates));
 		            // Post located fire to database
 		            String fire = emergencyApiClient.postApi("incident", new JSONObject()
 		            		.put("id_type_incident", EmergencyApi.idTypeEmergency)
 		            		.put("latitude_incident", centroid[0])
 		            		.put("longitude_incident", centroid[1])
-		            		.put("intensite_incident", 10)
+		            		.put("intensite_incident", getIntensityFire(arrLinkedDetector, fireCoordinates))
 		            		.put("date_incident", java.time.LocalDateTime.now())
-		            		.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergency)
+		            		.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyNotTreated)
 		            		.toString());
 		            // Move detectors from the fake emergency to the real on and purge the collection
 		            for(Detector detector: arrLinkedDetector) {
@@ -136,4 +217,114 @@ public class EmergencyManagerController {
     	return intensityFire;
     }
 	
+    public ArrayList<EmergencyBuilding> getEmergencyBuildings() throws IOException, JSONException, ParseException {
+    	ArrayList<EmergencyBuilding> arrEmergencyBuilding = new ArrayList<EmergencyBuilding>();
+    	JSONArray jsonArr = emergencyApiClient.getApi("casernes");
+    	for(Object o: jsonArr) {
+    		JSONObject json = new JSONObject(o.toString());
+    		ArrayList<EmergencyPeople> arrEmergencyPeopleLocal = new ArrayList<EmergencyPeople>();
+        	ArrayList<Vehicule> arrVehiculeLocal = new ArrayList<Vehicule>();
+        	for(EmergencyPeople emergencyPeople: arrEmergencyPeople) {
+    			if (emergencyPeople.getIdCaserne() == json.getInt("id_caserne")) {
+    				arrEmergencyPeopleLocal.add(emergencyPeople);
+    			}
+    		}
+    		for(Vehicule vehicule: arrVehicule) {
+    			if (vehicule.getIdCaserne() == json.getInt("id_caserne")) {
+    				arrVehiculeLocal.add(vehicule);
+    			}
+    		}
+    		arrEmergencyBuilding.add(EmergencyBuildingFactory.getEmergencyBuilding(new CaserneFactory(json.getString("nom_caserne"), 
+    																				new Coord(json.getDouble("longitude_caserne"), json.getDouble("latitude_caserne")), 
+    																				json.getInt("id_caserne"),
+    																				arrEmergencyPeople,
+    																				arrVehicule)));
+    		
+    	}
+    	return arrEmergencyBuilding;
+    }
+    
+    private ArrayList<EmergencyPeople> getEmergencyPeople() throws IOException, JSONException, ParseException {
+    	ArrayList<EmergencyPeople> arrEmergencyPeopleLocal = new ArrayList<EmergencyPeople>();
+    	JSONArray jsonArr = emergencyApiClient.getApi("pompiers");
+    	for(Object o: jsonArr) {
+    		JSONObject json = new JSONObject(o.toString());
+    		arrEmergencyPeopleLocal.add(EmergencyPeopleFactory.getEmergencyPeople(new PompierFactory(json.getString("prenom_pompier"), 
+    																		json.getString("nom_pompier"), 
+    																		LocalDate.parse(json.getString("date_naissance_pompier")), 
+    																		json.getInt("nombre_intervention_jour_maximum_pompier"), 
+    																		json.getBoolean("disponibilite_pompier"), 
+    																		json.getInt("id_pompier"), 
+    																		json.getInt("id_type_pompier"),
+    																		json.getInt("id_caserne"))));
+    	}
+    	return arrEmergencyPeopleLocal;
+    }
+    
+    private ArrayList<Vehicule> getVehicules() throws IOException, JSONException, ParseException {
+    	ArrayList<Vehicule> arrVehiculeLocal = new ArrayList<Vehicule>();
+    	JSONArray jsonArr = emergencyApiClient.getApi("vehicules");
+    	for(Object o: jsonArr) {
+    		JSONObject json = new JSONObject(o.toString());
+    		arrVehiculeLocal.add(VehiculeFactory.getVehicule(new TruckFactory(json.getInt("annee_vehicule"), 
+    													json.getInt("nombre_intervention_maximum_vehicule"), 
+    													new Coord(json.getDouble("longitude_vehicule"), json.getDouble("latitude_vehicule")), 
+    													json.getInt("id_vehicule"), 
+    													json.getInt("id_type_vehicule"), 
+    													json.getInt("id_type_disponibilite_vehicule"),
+    													json.getInt("id_caserne"))));
+    		
+    	}
+    	return arrVehiculeLocal;
+    }
+    
+    private void getEmergencies() throws IOException, JSONException, ParseException {
+    	ArrayList<Emergency> arrEmergencyNotTreated = new ArrayList<Emergency>();
+    	JSONArray jsonArr = emergencyApiClient.getApi("incidents");
+    	for(Object o: jsonArr) {
+    		JSONObject json = new JSONObject(o.toString());
+    		if (json.getInt("id_type_status_incident") != 3) {
+	    		arrEmergencyNotTreated.add(new Fire(json.getDouble("intensite_incident"),
+	    				LocalDateTime.parse(json.getString("date_incident")),
+	    				new Coord(json.getDouble("longitude_incident"), json.getDouble("latitude_incident")),
+	    				json.getInt("id_incident"),
+	    				json.getInt("id_type_incident"),
+	    				json.getInt("id_type_status_incident")));
+    	
+    		}
+    	}
+    	arrEmergency = arrEmergencyNotTreated;
+    }
+    
+    
+    
+	
+	private ArrayList<String> postIntervientAndUpdateResources(EmergencyApi emergencyApiClient, EmergencyBuilding emergencyBuilding, Emergency emergency, int nb) throws IOException {
+		ArrayList<String> arrRes = new ArrayList<String>();
+		ArrayList<EmergencyPeople> arrAvailableEmergencyPeople = emergencyBuilding.getAvailableEmergencyPeople();
+		Vehicule vehicule = emergencyBuilding.getAvailableVehicules().get(0);
+		while (nb > arrAvailableEmergencyPeople.size()) {
+			nb = nb - 1;
+		}
+		for (int i = 0; i < nb; i++) {
+			String res = emergencyApiClient.postApi("intervient", new JSONObject()
+					.put("id_pompier", arrAvailableEmergencyPeople.get(i).getId())
+					.put("id_vehicule", vehicule.getId())
+					.put("id_incident", emergency.getId())
+					.put("date_intervient", java.time.LocalDateTime.now())
+					.toString());
+			arrRes.add(res);
+			
+			emergencyApiClient.patchApi("pompier/" + arrAvailableEmergencyPeople.get(i).getId(), new JSONObject()
+					.put("disponibilite_pompier", false)
+					.toString());
+		}
+		emergencyApiClient.patchApi("incident/" + emergency.getId(), new JSONObject()
+				.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyBeingTreated)
+				.toString());
+		emergencyApiClient.patchApi("vehicule/" + vehicule.getId(), new JSONObject()
+				.put("id_type_disponibilite_vehicule", EmergencyApi.idTypeDispoVehiculeNotAvailable)
+				.toString());
+		return arrRes;
+	}
 }

@@ -1,17 +1,20 @@
 package model;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 public abstract class EmergencyPeople {
 	public abstract String getName();
 	public abstract int getNumbMaxIntPerDay();
-	public abstract Date getBirthDate();
+	public abstract LocalDate getBirthDate();
 	public abstract Boolean getDisponibility();
-
+	public abstract int getId();
+	public abstract int getIdType();
+	public abstract int getIdCaserne();
 	
 	@Override
 	public String toString() {
-		return "EmergencyPeople [getName()=" + getName() + ", getNumbMaxIntPerDate()=" + getNumbMaxIntPerDay()
-				+ ", getBirthDate()=" + getBirthDate() + ", getDisponibility()=" + getDisponibility() + "]";
+		return "EmergencyPeople [getName()=" + getName() + ", getNumbMaxIntPerDay()=" + getNumbMaxIntPerDay()
+				+ ", getBirthDate()=" + getBirthDate() + ", getDisponibility()=" + getDisponibility() + ", getId()="
+				+ getId() + ", getIdType()=" + getIdType() + ", getIdCaserne()=" + getIdCaserne() + "]";
 	}
 }

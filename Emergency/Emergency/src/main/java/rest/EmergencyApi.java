@@ -13,8 +13,12 @@ import okhttp3.Response;
 public class EmergencyApi {	
 	public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 	public static final int idTypeEmergency = 1; // Fire
-	public static final int idTypeStatusEmergency = 1; // Not treated year
+	public static final int idTypeStatusEmergencyNotTreated = 1;
+	public static final int idTypeStatusEmergencyBeingTreated = 2;
+	public static final int idTypeStatusEmergencyForDetected = 3;
 	public static final int idTypeEmergencyPotential = 100; // Potential Fires
+	public static final int idTypeDispoVehiculeAvailable = 1;
+	public static final int idTypeDispoVehiculeNotAvailable = 2;
 	public static final int idEmergencyFake = 1; // Id of Emergency used to regroup all detectors sent
 	private String token;
 	private OkHttpClient client;
@@ -48,6 +52,18 @@ public class EmergencyApi {
 		Request request = new Request.Builder()
 				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
 				.post(body)
+				.build();
+		  
+		  try (Response response = client.newCall(request).execute()) {
+		    return response.body().string();
+		  }
+	}
+	
+	public String patchApi(String url, String json) throws IOException {
+		RequestBody body = RequestBody.create(json, JSON);
+		Request request = new Request.Builder()
+				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
+				.patch(body)
 				.build();
 		  
 		  try (Response response = client.newCall(request).execute()) {

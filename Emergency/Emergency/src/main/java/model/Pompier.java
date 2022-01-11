@@ -1,21 +1,27 @@
 package model;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 public class Pompier extends EmergencyPeople {
 	private String firstName;
 	private String lastName;
 	private int nbMaxIntPerDay;
-	private Date birthDate;
+	private LocalDate birthDate;
 	private Boolean disbonibility;
+	private int id;
+	private int idType;
+	private int idCaserne;
 	
-	public Pompier(String firstName, String lastName, Date birthDate, int nbMaxIntPerDay, Boolean disponibilty) {
+	public Pompier(String firstName, String lastName, LocalDate birthDate, int nbMaxIntPerDay, Boolean disponibilty, int id, int idType, int idCaserne) {
 		super();
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.birthDate = birthDate;
 		this.nbMaxIntPerDay = nbMaxIntPerDay;
 		this.disbonibility = disponibilty;
+		this.id = id;
+		this.idType = idType;
+		this.idCaserne = idCaserne;
 	}
 
 	@Override
@@ -29,12 +35,27 @@ public class Pompier extends EmergencyPeople {
 	}
 
 	@Override
-	public Date getBirthDate() {
+	public LocalDate getBirthDate() {
 		return birthDate;
 	}
 	
 	@Override
 	public Boolean getDisponibility() {
 		return disbonibility;
+	}
+
+	@Override
+	public int getId() {
+		return id;
+	}
+
+	@Override
+	public int getIdType() {
+		return idType;
+	}
+	
+	@Override
+	public int getIdCaserne() {
+		return idCaserne;
 	}
 }

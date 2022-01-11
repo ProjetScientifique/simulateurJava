@@ -44,17 +44,16 @@ public class SetupDb {
 				.put("id_type_incident", EmergencyApi.idTypeEmergencyPotential)
 				.put("latitude_incident", 0)
 				.put("longitude_incident", 0)
-				.put("intensite_incident", 10)
+				.put("intensite_incident", 0)
 				.put("date_incident", "1999-01-01T00:00:00.000Z")
-				.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergency)
+				.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyForDetected)
 				.toString());
-		System.out.println(res);
 		return res;
 	}
 	
 	public ArrayList<String> postEmergencyBuildings() throws JSONException, IOException {
 		ArrayList<String> arrRes = new ArrayList<String>();
-		for (Coord coordForEmergencyBuilding : ControllerConfig.COORDS_DETECTORS) {
+		for (Coord coordForEmergencyBuilding : ControllerConfig.COORDS_EMERGENCY_BUILDINGS) {
 			String res = client.postApi("caserne", new JSONObject()
 					.put("nom_caserne", faker.name().lastName())
 					.put("latitude_caserne", coordForEmergencyBuilding.getLatitude())
@@ -67,17 +66,13 @@ public class SetupDb {
 	
 	public ArrayList<String> postCaporalChef(EmergencyBuilding emergencyBuilding, int nbToCreate) throws JSONException, IllegalArgumentException, IOException {
 		ArrayList<String> arrRes = new ArrayList<String>();
-		cal.set(1999, Calendar.JANUARY, 1);
-		Date firstDate = cal.getTime();
-		cal.set(2000, Calendar.JANUARY, 1);
-		Date lastDate = cal.getTime();
 		for (int i = 0; i < nbToCreate; i++) {
 			String res = client.postApi("pompier", new JSONObject()
 					.put("id_caserne", emergencyBuilding.getId())
 					.put("id_type_pompier", 1)
 					.put("nom_pompier", faker.name().lastName())
 					.put("prenom_pompier", faker.name().firstName())
-					.put("date_naissance_pompier", faker.date().between(firstDate, lastDate))
+					.put("date_naissance_pompier", "2000-01-01")
 					.put("nombre_intervention_jour_maximum_pompier", ControllerConfig.NB_MAX_INTERV_PER_DAY_EMERGENCYPEOPLE)
 					.put("disponibilite_pompier", true)
 					.toString());
@@ -88,17 +83,13 @@ public class SetupDb {
 	
 	public ArrayList<String> postCaporal(EmergencyBuilding emergencyBuilding, int nbToCreate) throws JSONException, IllegalArgumentException, IOException {
 		ArrayList<String> arrRes = new ArrayList<String>();
-		cal.set(1999, Calendar.JANUARY, 1);
-		Date firstDate = cal.getTime();
-		cal.set(2000, Calendar.JANUARY, 1);
-		Date lastDate = cal.getTime();
 		for (int i = 0; i < nbToCreate; i++) {
 			String res = client.postApi("pompier", new JSONObject()
 					.put("id_caserne", emergencyBuilding.getId())
 					.put("id_type_pompier", 2)
 					.put("nom_pompier", faker.name().lastName())
 					.put("prenom_pompier", faker.name().firstName())
-					.put("date_naissance_pompier", faker.date().between(firstDate, lastDate))
+					.put("date_naissance_pompier", "2000-01-01")
 					.put("nombre_intervention_jour_maximum_pompier", ControllerConfig.NB_MAX_INTERV_PER_DAY_EMERGENCYPEOPLE)
 					.put("disponibilite_pompier", true)
 					.toString());
@@ -110,10 +101,10 @@ public class SetupDb {
 	public ArrayList<String> postCamionCiterne(EmergencyBuilding emergencyBuilding, int nbToCreate) throws JSONException, IllegalArgumentException, IOException {
 		ArrayList<String> arrRes = new ArrayList<String>();
 		for (int i = 0; i < 5; i++) {
-			String res = client.postApi("pompier", new JSONObject()
+			String res = client.postApi("vehicule", new JSONObject()
 					.put("id_caserne", emergencyBuilding.getId())
 					.put("id_type_vehicule", 1)
-					.put("id_type_disponibilite_vehicule", 1) // 1 = Disponible
+					.put("id_type_disponibilite_vehicule", EmergencyApi.idTypeDispoVehiculeAvailable)
 					.put("annee_vehicule", 5)
 					.put("nombre_intervention_maximum_vehicule", ControllerConfig.NB_MAX_INTERV_PER_DAY_VEHICULE)
 					.put("latitude_vehicule", emergencyBuilding.getCoord().getLatitude())

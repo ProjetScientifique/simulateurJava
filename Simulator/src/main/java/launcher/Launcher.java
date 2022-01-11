@@ -32,7 +32,7 @@ public class Launcher {
 		DetectorController sensorController = new SensorController(simulatorApiClient);
 		sensorController.populateDetectorArray();
 		//// Start Simulation
-		// Create fire 
+		// Create fire
 		EmergencyController fireController = new FireController(simulatorApiClient);
 		int turn = 0;
 		do {
