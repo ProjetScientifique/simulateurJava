@@ -1,19 +1,21 @@
 package model;
 
-import java.sql.Timestamp;
+import java.time.LocalDate;
 
 public class FireFactory implements EmergencyAbstractFactory {
 	private double intensity;
-	private Timestamp date;
+	private LocalDate date;
 	private Coord coord;
 	private int id;
+	private int idEmergency;
 	
-	public FireFactory(double intensity, Timestamp date, Coord coord) {
+	public FireFactory(double intensity, LocalDate date, Coord coord) {
 		super();
 		this.intensity = intensity;
 		this.date = date;
 		this.coord = coord;
 		this.id = 0;
+		this.idEmergency = 0;
 	}
 
 	@Override

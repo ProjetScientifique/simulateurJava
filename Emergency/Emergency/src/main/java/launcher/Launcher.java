@@ -2,7 +2,6 @@ package launcher;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -10,7 +9,6 @@ import org.json.JSONException;
 
 import controller.EmergencyManagerController;
 import database.SetupDb;
-import model.Emergency;
 import model.EmergencyBuilding;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;

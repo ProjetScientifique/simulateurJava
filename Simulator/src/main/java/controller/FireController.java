@@ -1,7 +1,7 @@
 package controller;
 
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.time.LocalDate;
 
 import org.apache.commons.math3.util.Precision;
 import org.json.JSONObject;
@@ -25,7 +25,7 @@ public class FireController extends EmergencyController {
 		double longitude = Precision.round(ControllerConfig.LONGITUDE_MIN + (Math.random() * (ControllerConfig.LONGITUDE_MAX - ControllerConfig.LONGITUDE_MIN)), 7);
 		double latitude = Precision.round(ControllerConfig.LATITUDE_MIN + (Math.random() * (ControllerConfig.LATITUDE_MAX - ControllerConfig.LATITUDE_MIN)), 7);
 		Coord coordEmergency = new Coord(longitude, latitude);
-		return EmergencyFactory.getEmergency(new FireFactory(Precision.round(Math.random() * 10, 2), new Timestamp(System.currentTimeMillis()), coordEmergency));
+		return EmergencyFactory.getEmergency(new FireFactory(Precision.round(Math.random() * 10, 2), LocalDate.now(), coordEmergency));
 	}
 
 	@Override

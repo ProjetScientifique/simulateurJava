@@ -1,7 +1,6 @@
 package controller;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -56,9 +55,11 @@ public class EmergencyManagerController {
 					if (emergency.getIntensity() >= 5) {
 						// Send 5 Emergency People
 						postIntervientAndUpdateResources(emergencyApiClient, emergencyBuilding, emergency, 5);
+						System.out.println("One truck and 5 Firefighters were sent.");
 					} else {
 						// Send 3 Emergency People
 						postIntervientAndUpdateResources(emergencyApiClient, emergencyBuilding, emergency, 3);
+						System.out.println("One truck and 3 Firefighters were sent.");
 					}
 				}
 			} else {
@@ -279,12 +280,12 @@ public class EmergencyManagerController {
     }
     
     private void getEmergencies() throws IOException, JSONException, ParseException {
-    	ArrayList<Emergency> arrEmergencyNotTreated = new ArrayList<Emergency>();
+    	ArrayList<Emergency> arrEmergencyLocal = new ArrayList<Emergency>();
     	JSONArray jsonArr = emergencyApiClient.getApi("incidents");
     	for(Object o: jsonArr) {
     		JSONObject json = new JSONObject(o.toString());
-    		if (json.getInt("id_type_status_incident") != 3) {
-	    		arrEmergencyNotTreated.add(new Fire(json.getDouble("intensite_incident"),
+    		if (json.getInt("id_type_status_incident") != EmergencyApi.idTypeStatusEmergencyForDetected) {
+    			arrEmergencyLocal.add(new Fire(json.getDouble("intensite_incident"),
 	    				LocalDateTime.parse(json.getString("date_incident")),
 	    				new Coord(json.getDouble("longitude_incident"), json.getDouble("latitude_incident")),
 	    				json.getInt("id_incident"),
@@ -293,7 +294,7 @@ public class EmergencyManagerController {
     	
     		}
     	}
-    	arrEmergency = arrEmergencyNotTreated;
+    	arrEmergency = arrEmergencyLocal;
     }
     
     
