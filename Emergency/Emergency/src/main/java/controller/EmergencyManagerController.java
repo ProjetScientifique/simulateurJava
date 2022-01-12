@@ -173,6 +173,9 @@ public class EmergencyManagerController {
 				            			.put("date_detecte", new JSONObject(resDelete).getString("date_detecte"))
 				            			.put("intensite_detecte", detector.getIntensity())
 				            			.toString());
+			            		emergencyApiClient.patchApi("incident/" + emergency.getId(), new JSONObject()
+			            				.put("intensite_incident", getIntensityFire(arrLinkedDetector, fireCoordinates))
+			            				.toString());
 			            	}
 						}
 		            }
