@@ -13,7 +13,7 @@ import model.EmergencyBuilding;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
 
-public class Launcher {
+public class LauncherEmergency {
 	public static void main(String[] args) throws MqttException, IOException, InterruptedException, JSONException, ParseException {
 		//// API & MQTT Clients & Setup
 		EmergencyApi emergencyApiClient = new EmergencyApi("CB814D37E278A63D3666B1A1604AD0F5C5FD7E177267F62B8D719F49182F410A");

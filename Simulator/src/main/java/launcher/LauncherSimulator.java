@@ -1,7 +1,6 @@
 package launcher;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -15,16 +14,14 @@ import controller.EmergencySimulationController;
 import controller.FireController;
 import controller.SensorController;
 import database.SetupDb;
-import model.Coord;
 import model.Detector;
 import model.Emergency;
-import model.Fire;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
 import rest.Map;
 import rest.SimulatorApi;
 
-public class Launcher {
+public class LauncherSimulator {
 	public static void main(String[] args) throws IOException, InterruptedException, MqttException {
 		//// API & MQTT Clients
 		SimulatorApi simulatorApiClient = new SimulatorApi("449928d774153132c2c3509647e3d23f8e168fb50660fa27dd33c8342735b166");
@@ -46,7 +43,6 @@ public class Launcher {
 		EmergencySimulationController emergencySimulationController = new EmergencySimulationController(emergencyApiClient, arrFire, mapClient);
 		int turn = 0;
 		do {
-			/*
 			if (turn % 5 == 0) { // Generate a fire every five round
 				// Generate fire
 				boolean newFireCoordinateOk = false;
@@ -68,9 +64,9 @@ public class Launcher {
 				fireController.apiPostEmergency(fire);
 				System.out.println("Fire generated : " + fire);
 				arrFire.add(fire);
-			}*/
-			Emergency fireTest = new Fire(8.6, LocalDate.now(), new Coord(45.7660346, 4.834665));
-			arrFire.add(fireTest);
+			}
+			//Emergency fireTest = new Fire(8.6, LocalDate.now(), new Coord(45.7660346, 4.834665));
+			//arrFire.add(fireTest);
 			for(Emergency fire: arrFire) {
 				// Update detectors to know which one detected the incident
 				sensorController.updateDetectors(fire.getCoord(), fire.getIntensity());
