@@ -58,7 +58,7 @@ public class BrokerMqtt {
                 		.put("date_detecte", java.time.LocalDateTime.now())
                 		.put("intensite_detecte", json.getDouble("intensity"))
                 		.toString());
-                Detector detector = new Sensor(json.getDouble("intensity"), "", new Coord(jsonDetector.getDouble("longitude_detecteur"), jsonDetector.getDouble("latitude_detecteur")), ControllerConfig.RANGE, jsonDetector.getInt("id_detecteur"));
+                Detector detector = new Sensor(json.getDouble("intensity"), "", new Coord(jsonDetector.getDouble("latitude_detecteur"), jsonDetector.getDouble("longitude_detecteur")), ControllerConfig.RANGE, jsonDetector.getInt("id_detecteur"));
                 synchronized (arrTriggeredDetectors) {
                     arrTriggeredDetectors.add(detector);
 				}

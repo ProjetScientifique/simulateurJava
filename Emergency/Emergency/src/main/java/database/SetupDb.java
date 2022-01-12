@@ -116,6 +116,6 @@ public class SetupDb {
 	}
 	
 	public void resetDatabase() throws IOException {
-		client.deleteApi("delete_all", "");
+		client.deleteApi("delete_all");
 	}
 }

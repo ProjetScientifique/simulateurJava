@@ -149,8 +149,8 @@ public class EmergencyManagerController {
 		            
 		            double[] centroid = optimum.getPoint().toArray();
 		            
-		            Coord fireCoordinates = new Coord(centroid[1], centroid[0]);
-		            System.out.println("Potential fire : " + fireCoordinates + "Intensity : " + getIntensityFire(arrLinkedDetector, fireCoordinates));
+		            Coord fireCoordinates = new Coord(centroid[0], centroid[1]);
+		            System.out.println("Potential fire : " + fireCoordinates + " | Intensity : " + getIntensityFire(arrLinkedDetector, fireCoordinates));
 		            for(Emergency emergency: arrEmergency) {
 						double distBetweenFires = Math.sqrt(Math.pow(emergency.getCoord().getLongitude() - fireCoordinates.getLongitude(), 2) + Math.pow(emergency.getCoord().getLatitude() - fireCoordinates.getLatitude(), 2));
 						if (distBetweenFires <= 2*ControllerConfig.RANGE) {
@@ -158,24 +158,20 @@ public class EmergencyManagerController {
 							isNewFire = false;
 							// Update values from existing detectors
 			            	for(Detector detector: arrLinkedDetector) {
-			            		emergencyApiClient.deleteApi("detecte", new JSONObject()
-				            			.put("id_incident", EmergencyApi.idEmergencyFake)
-				            			.put("id_detecteur", detector.getId())
-				            			.toString());
+			            		emergencyApiClient.deleteDetecte(EmergencyApi.idEmergencyFake, detector.getId());
 			            		// Patch equivalent
-			            		String resDelete = emergencyApiClient.deleteApi("detecte", new JSONObject()
-			            				.put("id_incident", emergency.getId())
-				            			.put("id_detecteur", detector.getId())
-				            			.toString());
+			            		String resDelete = emergencyApiClient.deleteDetecte(emergency.getId(), detector.getId());
+			            		System.out.println("AAAAAA : " + resDelete);
 			            		emergencyApiClient.postApi("detecte", new JSONObject()
 			            				.put("id_incident", emergency.getId())
 				            			.put("id_detecteur", detector.getId())
-				            			.put("date_detecte", new JSONObject(resDelete).getString("date_detecte"))
+				            			.put("date_detecte", java.time.LocalDateTime.now())
 				            			.put("intensite_detecte", detector.getIntensity())
 				            			.toString());
 			            		emergencyApiClient.patchApi("incident/" + emergency.getId(), new JSONObject()
 			            				.put("intensite_incident", getIntensityFire(arrLinkedDetector, fireCoordinates))
 			            				.toString());
+				            	clientMqtt.getArrTriggeredDetectors().remove(detector);
 			            	}
 						}
 		            }
@@ -191,10 +187,7 @@ public class EmergencyManagerController {
 			            		.toString());
 			            // Move detectors from the fake emergency to the real on and purge the collection
 			            for(Detector detector: arrLinkedDetector) {
-			            	emergencyApiClient.deleteApi("detecte", new JSONObject()
-			            			.put("id_incident", EmergencyApi.idEmergencyFake)
-			            			.put("id_detecteur", detector.getId())
-			            			.toString());
+			            	emergencyApiClient.deleteDetecte(EmergencyApi.idEmergencyFake, detector.getId());
 			            	emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
 			                		.put("id_incident", new JSONObject(fire).getInt("id_incident"))
 			                		.put("id_detecteur", detector.getId())
@@ -247,7 +240,11 @@ public class EmergencyManagerController {
         		intensityFire = intensityFromDetector;
     		}
     	}
-    	return intensityFire;
+    	if (intensityFire <= 10 && intensityFire >= 0) { // Prevents random data ?
+        	return intensityFire;
+    	}else {
+    		return maxIntensityFromDetector;
+    	}
     }
 	
     public ArrayList<EmergencyBuilding> getEmergencyBuildings() throws IOException, JSONException, ParseException {
@@ -268,7 +265,7 @@ public class EmergencyManagerController {
     			}
     		}
     		arrEmergencyBuilding.add(EmergencyBuildingFactory.getEmergencyBuilding(new CaserneFactory(json.getString("nom_caserne"), 
-    																				new Coord(json.getDouble("longitude_caserne"), json.getDouble("latitude_caserne")), 
+    																				new Coord(json.getDouble("latitude_caserne"), json.getDouble("longitude_caserne")), 
     																				json.getInt("id_caserne"),
     																				arrEmergencyPeople,
     																				arrVehicule)));
@@ -301,7 +298,7 @@ public class EmergencyManagerController {
     		JSONObject json = new JSONObject(o.toString());
     		arrVehiculeLocal.add(VehiculeFactory.getVehicule(new TruckFactory(json.getInt("annee_vehicule"), 
     													json.getInt("nombre_intervention_maximum_vehicule"), 
-    													new Coord(json.getDouble("longitude_vehicule"), json.getDouble("latitude_vehicule")), 
+    													new Coord(json.getDouble("latitude_vehicule"), json.getDouble("longitude_vehicule")), 
     													json.getInt("id_vehicule"), 
     													json.getInt("id_type_vehicule"), 
     													json.getInt("id_type_disponibilite_vehicule"),
@@ -319,7 +316,7 @@ public class EmergencyManagerController {
     		if (json.getInt("id_type_status_incident") != EmergencyApi.idTypeStatusEmergencyForDetected) {
     			arrEmergencyLocal.add(new Fire(json.getDouble("intensite_incident"),
 	    				LocalDateTime.parse(json.getString("date_incident")),
-	    				new Coord(json.getDouble("longitude_incident"), json.getDouble("latitude_incident")),
+	    				new Coord(json.getDouble("latitude_incident"), json.getDouble("longitude_incident")),
 	    				json.getInt("id_incident"),
 	    				json.getInt("id_type_incident"),
 	    				json.getInt("id_type_status_incident")));

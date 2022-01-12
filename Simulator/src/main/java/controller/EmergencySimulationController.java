@@ -132,7 +132,7 @@ public class EmergencySimulationController {
 			JSONObject jsonVehicule = new JSONObject(oBis.toString());
 			arrVehicule.add(new Truck(jsonVehicule.getInt("annee_vehicule"),
 									jsonVehicule.getInt("nombre_intervention_maximum_vehicule"), 
-									new Coord(jsonVehicule.getDouble("longitude_vehicule"), jsonVehicule.getDouble("latitude_vehicule")), 
+									new Coord(jsonVehicule.getDouble("latitude_vehicule"), jsonVehicule.getDouble("longitude_vehicule")), 
 									jsonVehicule.getInt("id_vehicule"),
 									jsonVehicule.getInt("id_type_vehicule"),
 									idEmergency));
@@ -183,7 +183,7 @@ public class EmergencySimulationController {
 			longitude = json.getDouble("longitude_incident");
 			latitude = json.getDouble("latitude_incident");
 		}
-		Coord coord = new Coord(longitude, latitude);
+		Coord coord = new Coord(latitude, longitude);
 		return coord;
 	}
 	
@@ -215,7 +215,7 @@ public class EmergencySimulationController {
 	
 	private Coord getCoordCaserneForVehicule(int idVehicule) throws JSONException, IOException {
 		JSONObject jsonCaserne = emergencyApiClient.getApi("caserne/" + emergencyApiClient.getApi("vehicule/" + idVehicule).getJSONObject(0).getInt("id_caserne")).getJSONObject(0);
-		Coord coordCaserne = new Coord(jsonCaserne.getDouble("longitude_caserne"), jsonCaserne.getDouble("latitude_caserne"));
+		Coord coordCaserne = new Coord(jsonCaserne.getDouble("latitude_caserne"), jsonCaserne.getDouble("longitude_caserne"));
 		return coordCaserne;
 	}
 	

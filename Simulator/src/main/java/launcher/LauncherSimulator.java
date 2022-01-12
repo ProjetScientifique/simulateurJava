@@ -1,6 +1,7 @@
 package launcher;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -14,8 +15,10 @@ import controller.EmergencySimulationController;
 import controller.FireController;
 import controller.SensorController;
 import database.SetupDb;
+import model.Coord;
 import model.Detector;
 import model.Emergency;
+import model.Fire;
 import mqtt.BrokerMqtt;
 import rest.EmergencyApi;
 import rest.Map;
@@ -41,10 +44,19 @@ public class LauncherSimulator {
 		EmergencyController fireController = new FireController(simulatorApiClient);
 		ArrayList<Emergency> arrFire = new ArrayList<Emergency>();
 		EmergencySimulationController emergencySimulationController = new EmergencySimulationController(emergencyApiClient, arrFire, mapClient);
+		//// TEST
+		Emergency fireTest = new Fire(8.6, LocalDate.now(), new Coord(45.7660346, 4.834665));
+		fireController.apiPostEmergency(fireTest);
+		System.out.println("Fire generated : " + fireTest);
+		arrFire.add(fireTest);
+		////
 		int turn = 0;
 		do {
+			boolean newFire = false;
+			/*
 			if (turn % 5 == 0) { // Generate a fire every five round
 				// Generate fire
+				newFire = true;
 				boolean newFireCoordinateOk = false;
 				Emergency fire = null;
 				while(newFireCoordinateOk == false) {
@@ -65,8 +77,7 @@ public class LauncherSimulator {
 				System.out.println("Fire generated : " + fire);
 				arrFire.add(fire);
 			}
-			//Emergency fireTest = new Fire(8.6, LocalDate.now(), new Coord(45.7660346, 4.834665));
-			//arrFire.add(fireTest);
+			*/
 			for(Emergency fire: arrFire) {
 				// Update detectors to know which one detected the incident
 				sensorController.updateDetectors(fire.getCoord(), fire.getIntensity());
@@ -76,7 +87,12 @@ public class LauncherSimulator {
 				// Forge the message that will be sent to the broker and post triggered detectors the the API one by one
 				String msg = "";
 				for(Detector trigDetector: arrTriggeredDetectors){
-					sensorController.apiPostTriggeredDetector(fire, trigDetector);
+					if (newFire == true) {
+						sensorController.apiPostTriggeredDetector(fire, trigDetector);
+						newFire = false;
+					} else {
+						sensorController.apiPatchTriggeredDetector(fire, trigDetector);
+					}
 				    msg += new JSONObject()
 				    		.put("id", trigDetector.getId())
 				    		.put("intensity", trigDetector.getIntensity())

@@ -1,8 +1,11 @@
 package EquipeUn.Emergency;
 
-import java.util.ArrayList;
+import java.io.IOException;
 
-import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import rest.EmergencyApi;
 
 /**
  * Hello world!
@@ -10,16 +13,10 @@ import org.json.JSONArray;
  */
 public class App 
 {
-    public static void main( String[] args )
+    public static void main( String[] args ) throws JSONException, IOException
     {
-        System.out.println( "Hello World!" );
-        ArrayList<String> arr = new ArrayList<String>();
-        arr.add("oajzoe");
-        arr.add("oazjeozajejoza");
-        JSONArray testArr = new JSONArray()
-        		.put(arr)
-        		.put("hi")
-        		.put("nnnn");
-        System.out.println(testArr);
+		EmergencyApi emergencyApiClient = new EmergencyApi("CB814D37E278A63D3666B1A1604AD0F5C5FD7E177267F62B8D719F49182F410A");
+		String res = emergencyApiClient.deleteApi("detecte");
+		System.out.println(res);
     }
 }

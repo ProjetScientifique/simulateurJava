@@ -22,8 +22,8 @@ public class FireController extends EmergencyController {
 	
 	@Override
 	public Emergency generateEmergency() {
-		double longitude = Precision.round(ControllerConfig.LONGITUDE_MIN + (Math.random() * (ControllerConfig.LONGITUDE_MAX - ControllerConfig.LONGITUDE_MIN)), 7);
-		double latitude = Precision.round(ControllerConfig.LATITUDE_MIN + (Math.random() * (ControllerConfig.LATITUDE_MAX - ControllerConfig.LATITUDE_MIN)), 7);
+		double longitude = Precision.round(ControllerConfig.LATITUDE_MIN + (Math.random() * (ControllerConfig.LATITUDE_MAX - ControllerConfig.LATITUDE_MIN)), 7);
+		double latitude = Precision.round(ControllerConfig.LONGITUDE_MIN + (Math.random() * (ControllerConfig.LONGITUDE_MAX - ControllerConfig.LONGITUDE_MIN)), 7);
 		Coord coordEmergency = new Coord(longitude, latitude);
 		return EmergencyFactory.getEmergency(new FireFactory(Precision.round(Math.random() * 10, 2), LocalDate.now(), coordEmergency));
 	}

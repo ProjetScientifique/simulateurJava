@@ -4,7 +4,7 @@ public class Coord {
 	private double longitude;
 	private double latitude;
 	
-	public Coord(double longitude, double latitude) {
+	public Coord( double latitude, double longitude) {
 		super();
 		this.longitude = longitude;
 		this.latitude = latitude;

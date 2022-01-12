@@ -39,7 +39,7 @@ public class Map {
 			 JSONArray jsonArr = new JSONObject(response.body().string()).getJSONObject("route").getJSONArray("legs").getJSONObject(0).getJSONArray("maneuvers");
 			 for(Object o: jsonArr) {
 				 JSONObject json = new JSONObject(o.toString()).getJSONObject("startPoint");
-				 coords.add(new Coord(json.getDouble("lng"), json.getDouble("lat")));
+				 coords.add(new Coord(json.getDouble("lat"), json.getDouble("lng")));
 			 }
 		 }
 	return coords;

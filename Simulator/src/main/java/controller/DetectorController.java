@@ -21,6 +21,8 @@ public abstract class DetectorController {
 	public abstract void populateDetectorArray() throws IOException;
 	
 	public abstract String apiPostTriggeredDetector(Emergency emergency, Detector detector) throws IOException;
+
+	public abstract ArrayList<String> apiPatchTriggeredDetector(Emergency emergency, Detector detector) throws IOException;
 	
 	public ArrayList<Detector> getDetectorArray(){
 		return detectorArray;

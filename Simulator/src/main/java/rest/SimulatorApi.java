@@ -61,4 +61,15 @@ public class SimulatorApi {
 		    return response.body().string();
 		  }
 	}
+	
+	public String deleteDetecte(int idEmergency, int idDetector) throws IOException {
+		Request request = new Request.Builder()
+				.url("http://127.0.0.1:8000/detecte/?id_incident=" + idEmergency + "&id_detecteur=" + idDetector + "&token_api="+token)
+				.delete()
+				.build();
+		 
+		  try (Response response = client.newCall(request).execute()) {
+		    return response.body().string();
+		  }
+	}
 }
