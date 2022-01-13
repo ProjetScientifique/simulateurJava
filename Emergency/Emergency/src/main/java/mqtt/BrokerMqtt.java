@@ -24,7 +24,7 @@ public class BrokerMqtt {
 
 	public BrokerMqtt() throws MqttException {
 		super();
-		this.mqttClient = new MqttClient("tcp://127.0.0.1:1883", "", new MemoryPersistence());;
+		this.mqttClient = new MqttClient("tcp://mosquitto-emergency:1883", "", new MemoryPersistence());;
 	}
 	
 	public void setUpBroker() throws MqttSecurityException, MqttException {

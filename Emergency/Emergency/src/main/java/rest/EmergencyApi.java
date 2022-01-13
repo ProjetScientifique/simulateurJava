@@ -31,7 +31,7 @@ public class EmergencyApi {
 
 	public JSONArray getApi(String url) throws IOException {
 		Request request = new Request.Builder()
-				.url("http://127.0.0.1:8001/" + url+"/?token_api="+token)
+				.url("http://emergency-api:8000/" + url+"/?token_api="+token)
 				.build();
 		
 		try (Response response = client.newCall(request).execute()) {
@@ -50,7 +50,7 @@ public class EmergencyApi {
 	public String postApi(String url, String json) throws IOException {
 		RequestBody body = RequestBody.create(json, JSON);
 		Request request = new Request.Builder()
-				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
+				.url("http://emergency-api:8000/" + url + "/?token_api="+token)
 				.post(body)
 				.build();
 		  
@@ -62,7 +62,7 @@ public class EmergencyApi {
 	public String patchApi(String url, String json) throws IOException {
 		RequestBody body = RequestBody.create(json, JSON);
 		Request request = new Request.Builder()
-				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
+				.url("http://emergency-api:8000/" + url + "/?token_api="+token)
 				.patch(body)
 				.build();
 		  
@@ -73,7 +73,7 @@ public class EmergencyApi {
 	
 	public String deleteApi(String url) throws IOException {
 		Request request = new Request.Builder()
-				.url("http://127.0.0.1:8001/" + url + "/?token_api="+token)
+				.url("http://emergency-api:8000/" + url + "/?token_api="+token)
 				.delete()
 				.build();
 		  
@@ -84,7 +84,7 @@ public class EmergencyApi {
 	
 	public String deleteDetecte(int idEmergency, int idDetector) throws IOException {
 		Request request = new Request.Builder()
-				.url("http://127.0.0.1:8001/detecte/?id_incident=" + idEmergency + "&id_detecteur=" + idDetector + "&token_api="+token)
+				.url("http://emergency-api:8000/detecte/?id_incident=" + idEmergency + "&id_detecteur=" + idDetector + "&token_api="+token)
 				.delete()
 				.build();
 		 
