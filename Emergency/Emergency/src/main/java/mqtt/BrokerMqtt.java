@@ -49,11 +49,11 @@ public class BrokerMqtt {
         //final CountDownLatch latch = new CountDownLatch(1);
         mqttClient.setCallback(new MqttCallback() {
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                System.out.println("Received a Message!" + new String(message.getPayload()));
+                System.out.println("Received a Message from broker : " + new String(message.getPayload()));
                 JSONObject json = new JSONObject(new String(message.getPayload()));
                 JSONObject jsonDetector = emergencyApiClient.getApi("detecteur/" + json.getInt("id")).getJSONObject(0);
                 emergencyApiClient.postApi("detecte", new JSONObject() // Post received detectors to the detecte table linked with a fake emergency.
-                		.put("id_incident", EmergencyApi.idEmergencyFake)
+                		.put("id_incident", EmergencyApi.ID_EMERGENCY_FAKE)
                 		.put("id_detecteur", json.getInt("id"))
                 		.put("date_detecte", java.time.LocalDateTime.now())
                 		.put("intensite_detecte", json.getDouble("intensity"))

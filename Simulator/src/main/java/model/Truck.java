@@ -63,6 +63,7 @@ public class Truck extends Vehicule {
 	@Override
 	public Coord move(Coord newCoord, Map clientMap) throws IOException {
 		ArrayList<Coord> arrCoords = clientMap.getCoords(coord, newCoord);
+		Coord coordBeg = coord;
 		if (arrCoords.get(arrCoords.size()-1).equal(coord)) {
 			coord = newCoord;
 			isDone = true;
@@ -78,6 +79,7 @@ public class Truck extends Vehicule {
 				isDone = true;
 			}
 		}
+		System.out.println("Vehicule with Id : " + id + " is going from " + coordBeg + " to " + newCoord + ", next step is : " + coord);
 		return coord;
 	}
 }

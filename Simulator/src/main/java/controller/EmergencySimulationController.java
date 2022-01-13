@@ -41,10 +41,13 @@ public class EmergencySimulationController {
 		matchSimulatedAndRealFire();
 		ArrayList<Integer> arrIdEmergencyReal = instanciateRessourcesByEmergency();
 		for(Emergency fireSimulated: arrFireSimulated) { // If fire isn't being taken care of, increase intensity.
+			System.out.println("Dealing with fire : " + fireSimulated);
 			if (!arrIdEmergencyReal.contains(fireSimulated.getIdEmergency())){
 				if ((fireSimulated.getIntensity() + 1) >= 10) {
-					fireSimulated.setIntensity(10);
+					System.out.println("Fire with Id : " + fireSimulated.getId() + " isn't being treated, it's at max intensity");
+					fireSimulated.setIntensity(9.99);
 				} else {
+					System.out.println("Fire with Id : " + fireSimulated.getId() + " isn't being treated, it's intensity was increased by 1");
 					fireSimulated.setIntensity(fireSimulated.getIntensity() + 1);
 				}
 			}
@@ -55,7 +58,7 @@ public class EmergencySimulationController {
 			ArrayList<EmergencyPeople> arrEmergencyPeopleForEmergency = getEmergencyPeopleForEmergency(idEmergency);
 			Coord coordForEmergency = getCoord(idEmergency);
 			for(Vehicule vehicule: arrVehiculeForEmergency) {
-				if (! vehicule.isDone()) {
+				if (! vehicule.isDone() || simulatedFireMatching.getIntensity() != 0) {
 					Coord nextCoord = vehicule.move(coordForEmergency, mapClient);
 					emergencyApiClient.patchApi("vehicule/" + vehicule.getId(), new JSONObject()
 							.put("longitude_vehicule", nextCoord.getLongitude())
@@ -63,27 +66,28 @@ public class EmergencySimulationController {
 							.toString());
 					if (vehicule.getCoord().equal(coordForEmergency)) {
 						for(EmergencyPeople emergencyPeople: arrEmergencyPeopleForEmergency) { // Should do stuff depending on efficacy
-							if (simulatedFireMatching.getIntensity() >= 1) {
+							if (simulatedFireMatching.getIntensity() > 1) {
 								simulatedFireMatching.setIntensity(simulatedFireMatching.getIntensity() - 1);
+								System.out.println("Pompier " + emergencyPeople.getName() + " has lowered the fire's intensity by 1 (New Fire intensity : " + simulatedFireMatching.getIntensity() + ")");
 							} else {
+								simulatedFireMatching.setIntensity(0);
 								System.out.println("Fire with id : " + idEmergency + " has been dealt with, vehicule is returning to the caserne.");
-								arrFireSimulated.remove(simulatedFireMatching);							
+								//arrFireSimulated.remove(simulatedFireMatching);							
 							}
 						}
 					} else {
-						System.out.println("Vehicule : " + vehicule + " hasn't arrived yet.");
+						System.out.println("Vehicule with Id : " + vehicule.getId() + " hasn't arrived yet.");
 					}
 				} else {
 					Coord coordCaserne = getCoordCaserneForVehicule(vehicule.getId());
 					Coord nextCoord = vehicule.move(coordCaserne, mapClient);
-					String resPatch = emergencyApiClient.patchApi("vehicule/" + vehicule.getId(), new JSONObject()
+					emergencyApiClient.patchApi("vehicule/" + vehicule.getId(), new JSONObject()
 							.put("longitude_vehicule", nextCoord.getLongitude())
 							.put("latitude_vehicule", nextCoord.getLatitude())
 							.toString());
-					System.out.println("PATCHBIS : " + resPatch);
 					if (vehicule.getCoord().equal(coordCaserne)) {
-						ArrayList<String> arrRes = patchEmergencyDataBaseAndUninstanciateRessources(idEmergency, arrVehiculeForEmergency, arrEmergencyPeopleForEmergency);
-						System.out.println("PATCH&DELETE : " + arrRes);
+						System.out.println("Vehicule with Id : " + vehicule.getId() + " went back to it's caserne, uninstanciating all the ressources.");
+						patchEmergencyDataBaseAndUninstanciateRessources(idEmergency, arrVehiculeForEmergency, arrEmergencyPeopleForEmergency);
 					} else {
 						System.out.println("Vehicule : " + vehicule + " is still returning to it's caserne");
 					}
@@ -206,7 +210,7 @@ public class EmergencySimulationController {
 					if (distBetween <= ControllerConfig.RANGE) {
 						fireSimulated.setIdEmergency(json.getInt("id_incident"));
 					}else {
-						System.out.println("Simulated fire : " + fireSimulated + " was not detected by the Emergency Manager !");
+						System.out.println("Simulated fire with Id : " + fireSimulated.getId() + " was not detected by the Emergency Manager !");
 					}
 				}
 			}
@@ -221,6 +225,7 @@ public class EmergencySimulationController {
 	
 	private ArrayList<String> patchEmergencyDataBaseAndUninstanciateRessources(int idEmergency, ArrayList<Vehicule> arrVehicule, ArrayList<EmergencyPeople> arrEmergencyPeople) throws JSONException, IOException {
 		ArrayList<String> arrRes = new ArrayList<String>();
+		// Should be done by the EmergencyManager
 		String resEmergency = emergencyApiClient.patchApi("incident/" + idEmergency, new JSONObject() //Emergency
 				.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyExtinguished)
 				.toString());

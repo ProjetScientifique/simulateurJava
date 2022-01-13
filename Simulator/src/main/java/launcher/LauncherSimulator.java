@@ -52,6 +52,7 @@ public class LauncherSimulator {
 		////
 		int turn = 0;
 		do {
+			System.out.println("\nNext turn : ");
 			boolean newFire = false;
 			/*
 			if (turn % 5 == 0) { // Generate a fire every five round
@@ -99,8 +100,7 @@ public class LauncherSimulator {
 				    		+ "\n";
 				}
 				// Send message to broker
-				String responserino = mqttClient.publishMessage("topic/detectors", msg);
-				System.out.println(responserino);
+				mqttClient.publishMessage("topic/detectors", msg);
 			}
 			// Do stuff with emergency data ?
 			emergencySimulationController.simulateIntervention();

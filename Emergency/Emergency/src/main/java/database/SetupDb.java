@@ -41,12 +41,12 @@ public class SetupDb {
 	
 	public String postFakeEmergency() throws JSONException, IOException {
 		String res = client.postApi("incident", new JSONObject()
-				.put("id_type_incident", EmergencyApi.idTypeEmergencyPotential)
+				.put("id_type_incident", EmergencyApi.ID_TYPE_EMERGENCY_POTENTIAL)
 				.put("latitude_incident", 0)
 				.put("longitude_incident", 0)
 				.put("intensite_incident", 0)
 				.put("date_incident", "1999-01-01T00:00:00.000Z")
-				.put("id_type_status_incident", EmergencyApi.idTypeStatusEmergencyForDetected)
+				.put("id_type_status_incident", EmergencyApi.ID_TYPE_STATUS_EMERGENCY_FOR_DETECTED)
 				.toString());
 		return res;
 	}
@@ -104,7 +104,7 @@ public class SetupDb {
 			String res = client.postApi("vehicule", new JSONObject()
 					.put("id_caserne", emergencyBuilding.getId())
 					.put("id_type_vehicule", 1)
-					.put("id_type_disponibilite_vehicule", EmergencyApi.idTypeDispoVehiculeAvailable)
+					.put("id_type_disponibilite_vehicule", EmergencyApi.ID_TYPE_DISPO_VEHICULE_AVAILABLE)
 					.put("annee_vehicule", 5)
 					.put("nombre_intervention_maximum_vehicule", ControllerConfig.NB_MAX_INTERV_PER_DAY_VEHICULE)
 					.put("latitude_vehicule", emergencyBuilding.getCoord().getLatitude())

@@ -12,14 +12,15 @@ import okhttp3.Response;
 
 public class EmergencyApi {	
 	public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
-	public static final int idTypeEmergency = 1; // Fire
-	public static final int idTypeStatusEmergencyNotTreated = 1;
-	public static final int idTypeStatusEmergencyBeingTreated = 2;
-	public static final int idTypeStatusEmergencyForDetected = 3;
-	public static final int idTypeEmergencyPotential = 100; // Potential Fires
-	public static final int idTypeDispoVehiculeAvailable = 1;
-	public static final int idTypeDispoVehiculeNotAvailable = 2;
-	public static final int idEmergencyFake = 1; // Id of Emergency used to regroup all detectors sent
+	public static final int ID_TYPE_EMERGENCY = 1; // Fire
+	public static final int ID_TYPE_STATUS_EMERGENCY_NOT_TREATED = 1;
+	public static final int ID_TYPE_STATUS_EMERGENCY_BEING_TREATED = 2;
+	public static final int ID_TYPE_STATUS_EMERGENCY_FOR_DETECTED = 3;
+	public static final int ID_TYPE_STATUS_EMERGENCY_EXTINGUISHED = 4;
+	public static final int ID_TYPE_EMERGENCY_POTENTIAL = 100; // Potential Fires
+	public static final int ID_TYPE_DISPO_VEHICULE_AVAILABLE = 1;
+	public static final int ID_TYPE_DISPO_VEHICULE_NOT_AVAILABLE = 2;
+	public static final int ID_EMERGENCY_FAKE = 1; // Id of Emergency used to regroup all detectors sent
 	private String token;
 	private OkHttpClient client;
 	

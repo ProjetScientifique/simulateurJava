@@ -35,10 +35,9 @@ public class LauncherEmergency {
 		System.out.println("Starting !");
 		mqttClient.getMessage("python/test", emergencyApiClient);
 		while (true) {
+			System.out.println("\n Next turn");
 			fireManagerController.detectPotentialFire();
 			fireManagerController.dealWithEmergencies();
-			// Maybe method to send stuff to grafana ?
-			// Maybe sync grafana directly to postgresql ?
 			TimeUnit.SECONDS.sleep(5);
 		}
 	}
