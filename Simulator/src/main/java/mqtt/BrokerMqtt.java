@@ -12,7 +12,7 @@ public class BrokerMqtt {
 
 	public BrokerMqtt() throws MqttException {
 		super();
-		this.mqttClient = new MqttClient("tcp://127.0.0.1:1883", "", new MemoryPersistence());;
+		this.mqttClient = new MqttClient("tcp://mosquitto-simulation:1883", "", new MemoryPersistence());;
 	}
 	
 	public String publishMessage(String topic, String msg) throws MqttSecurityException, MqttException {
